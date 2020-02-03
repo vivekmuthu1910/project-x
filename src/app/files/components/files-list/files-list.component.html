@@ -1,0 +1,8 @@
+<div class="cont" (keyup)="onKeydown($event)" cdkTrapFocus>
+  <app-list-view-item
+    *ngFor="let file of files"
+    [file]="file.fileName"
+    [thumbnail]="file.thumbnail"
+    [baseDir]="dir"
+  ></app-list-view-item>
+</div>
