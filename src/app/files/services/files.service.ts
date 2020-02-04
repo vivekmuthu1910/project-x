@@ -19,30 +19,12 @@ export class FilesService {
     });
   }
 
-  listVideos(
-    dir: string
-  ): Promise<
-    Array<{
-      name: string;
-      birthtime: Date;
-      size: number;
-    }>
-  > {
+  listVideos(dir: string): Promise<Array<string>> {
     return new Promise((resolve, reject) => {
       ipcRenderer
-        .once(
-          'getVideos',
-          (
-            event,
-            filestat: Array<{
-              name: string;
-              birthtime: Date;
-              size: number;
-            }>
-          ) => {
-            resolve(filestat);
-          }
-        )
+        .once('getVideos', (event, filestat: Array<string>) => {
+          resolve(filestat);
+        })
         .send('getVideos', dir, {
           sortBy: 'time',
           sortOrder: 'descending',
@@ -50,13 +32,17 @@ export class FilesService {
     });
   }
 
-  // openFile(folder: string, file: string) {
-  //   const filePath = path.join(folder, file);
-  //   const vlcCommand = `vlc -f "${filePath}"`;
-  //   exec(vlcCommand, (err, stdout) => {
-  //     if (err) {
-  //       console.error(err);
-  //     }
-  //   });
-  // }
+  getThumbs(dir: string, file: string): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+      ipcRenderer
+        .once('getThumbnail', (event, thumbnailBuffer: Buffer) => {
+          resolve(thumbnailBuffer);
+        })
+        .send('getThumbnail', dir, file);
+    });
+  }
+
+  openFile(folder: string, file: string) {
+    ipcRenderer.send('playVideo', folder, file);
+  }
 }

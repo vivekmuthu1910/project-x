@@ -9,13 +9,14 @@ interface GetAllFilesOptions {
   sortOrder: 'ascending' | 'descending';
 }
 
-const videoFileExts = ['mp4', 'wmv', 'mkv', 'avi', 'flv', 'mov'];
+const videoFileExts = ['.mp4', '.wmv', '.mkv', '.avi', '.flv', '.mov'];
 
-async function* getStats(files: Array<string>) {
+async function* getStats(dir: string, files: Array<string>) {
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
-    const stat = await fs.stat(file);
-    if (videoFileExts.includes(parse(file).ext)) {
+    const stat = await fs.stat(join(dir, file));
+    const parseFilePath = parse(file);
+    if (videoFileExts.includes(parseFilePath.ext)) {
       yield {
         name: file,
         birthtime: stat.birthtime,
@@ -32,10 +33,14 @@ export class FileExplorer {
   initialize() {
     ipcMain
       .on('getVideos', (event, dir, options?) => {
-        event.reply(this.getAllVideoFiles(dir, options));
+        this.getAllVideoFiles(dir, options).then(val => {
+          event.reply('getVideos', val);
+        });
       })
       .on('getThumbnail', (event, dir, file) => {
-        event.reply(this.getThumbnail(dir, file));
+        this.getThumbnail(dir, file).then(val => {
+          event.reply('getThumbnail', val);
+        });
       })
       .on('playVideo', (event, dir, file) => {
         this.playVideo(dir, file);
@@ -57,7 +62,8 @@ export class FileExplorer {
       birthtime: Date;
       size: number;
     }> = [];
-    for await (let stat of getStats(subFilFol)) {
+
+    for await (let stat of getStats(dir, subFilFol)) {
       fileStats.push(stat);
     }
 
@@ -81,11 +87,10 @@ export class FileExplorer {
             : 1;
         default:
           return 0;
-          break;
       }
     });
 
-    return fileStats;
+    return fileStats.map(val => val.name);
   }
 
   async getThumbnail(dir: string, fileName: string) {

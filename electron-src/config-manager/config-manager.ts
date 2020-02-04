@@ -68,7 +68,7 @@ export class ConfigManager {
 
   initializeIpcCalls() {
     ipcMain.on('getVideoDirs', event => {
-      event.reply(this.video.Directories);
+      event.reply('getVideoDirs', this.video.Directories);
     });
   }
 

@@ -16,7 +16,7 @@ import { FocusKeyManager } from '@angular/cdk/a11y';
   host: { role: 'list', tabindex: '0' },
 })
 export class FilesListComponent implements OnInit, AfterViewInit {
-  files: Array<{ fileName: string; thumbnail: string }> = [];
+  files: Array<{ fileName: string; thumbnail?: string }> = [];
 
   videoDirs: Array<string> = [];
 
@@ -27,14 +27,26 @@ export class FilesListComponent implements OnInit, AfterViewInit {
   constructor(private fileSer: FilesService) {}
 
   ngOnInit() {
-    this.fileSer.getVideosDirectories().then(val => {
-      console.log(val);
-      this.videoDirs = val;
-    });
+    this.fetchAllFiles();
+  }
+
+  async fetchAllFiles() {
+    this.videoDirs = await this.fileSer.getVideosDirectories();
+
+    const videoFiles = await this.fileSer.listVideos(this.videoDirs[0]);
+
+    for (let i = 0; i < videoFiles.length; i++) {
+      const thumb = (
+        await this.fileSer.getThumbs(this.videoDirs[0], videoFiles[i])
+      ).toString('base64');
+      this.files.push({
+        fileName: videoFiles[i],
+        thumbnail: thumb,
+      });
+    }
   }
 
   ngAfterViewInit() {
-    console.log(this.items);
     this.keyManager = new FocusKeyManager(this.items)
       .withWrap()
       .withHorizontalOrientation('ltr');
@@ -42,8 +54,7 @@ export class FilesListComponent implements OnInit, AfterViewInit {
   }
 
   openFile(file: string) {
-    console.log(file);
-    // this.fileSer.openFile(file);
+    this.fileSer.openFile(this.videoDirs[0], file);
   }
   onKeydown(event: KeyboardEvent) {
     if (event.key === 'Enter') {

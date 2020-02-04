@@ -6,8 +6,6 @@ import {
   ElementRef,
 } from '@angular/core';
 import { Highlightable, FocusableOption } from '@angular/cdk/a11y';
-import * as path from 'path';
-import * as fs from 'fs-extra';
 
 @Component({
   selector: 'app-list-view-item',
@@ -29,11 +27,11 @@ export class ListViewItemComponent implements OnInit, FocusableOption {
   constructor(private element: ElementRef) {}
 
   ngOnInit() {
-    console.log(this.baseDir, this.thumbnail);
-    fs.readFile(path.join(this.baseDir, this.thumbnail)).then(val => {
-      this.thumbnailImageBase64 =
-        'data:image/jpg;base64,' + Buffer.from(val).toString('base64');
-    });
+    if (this.thumbnail) {
+      this.thumbnailImageBase64 = 'data:image/jpg;base64,' + this.thumbnail;
+    } else {
+      this.thumbnailImageBase64 = 'assets/icons/video512x512.png';
+    }
   }
 
   getLabel() {
