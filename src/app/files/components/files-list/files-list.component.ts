@@ -18,6 +18,8 @@ import { FocusKeyManager } from '@angular/cdk/a11y';
 export class FilesListComponent implements OnInit, AfterViewInit {
   files: Array<{ fileName: string; thumbnail: string }> = [];
 
+  videoDirs: Array<string> = [];
+
   @ViewChildren(ListViewItemComponent) items: QueryList<ListViewItemComponent>;
 
   private keyManager: FocusKeyManager<ListViewItemComponent>;
@@ -25,8 +27,9 @@ export class FilesListComponent implements OnInit, AfterViewInit {
   constructor(private fileSer: FilesService) {}
 
   ngOnInit() {
-    this.fileSer.listFiles().then(val => {
-      this.files = val;
+    this.fileSer.getVideosDirectories().then(val => {
+      console.log(val);
+      this.videoDirs = val;
     });
   }
 
@@ -39,7 +42,8 @@ export class FilesListComponent implements OnInit, AfterViewInit {
   }
 
   openFile(file: string) {
-    this.fileSer.openFile(file);
+    console.log(file);
+    // this.fileSer.openFile(file);
   }
   onKeydown(event: KeyboardEvent) {
     if (event.key === 'Enter') {

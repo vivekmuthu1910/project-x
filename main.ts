@@ -2,21 +2,21 @@ import { app, BrowserWindow, screen, Menu } from 'electron';
 import * as path from 'path';
 import * as url from 'url';
 
-import { ProjectXMenu } from './electron-src/menu/menu';
-import { StateManager } from './electron-src/state-manager/state-manager';
-import { Messenger } from './electron-src/messenger/messenger';
-import { Downloader } from './electron-src/downloader/downloader';
+import { ConfigManager } from './electron-src/config-manager/config-manager';
+import { FileExplorer } from './electron-src/file-explorer/file-explorer';
+// import { Messenger } from './electron-src/messenger/messenger';
+// import { Downloader } from './electron-src/downloader/downloader';
 
 const args = process.argv.slice(1),
   serve = args.some(val => val === '--serve');
 
 class ProjectX {
   mainWin: BrowserWindow = null;
-  menu: ProjectXMenu;
 
-  stateManager: StateManager = null;
-  messenger: Messenger = null;
-  downloader: Downloader = null;
+  configManager: ConfigManager = null;
+  fileExplorer: FileExplorer = null;
+  // messenger: Messenger = null;
+  // downloader: Downloader = null;
 
   private _initialized = false;
 
@@ -24,26 +24,17 @@ class ProjectX {
 
   initialize() {
     try {
-      this.mainWin = new BrowserWindow({
-        fullscreen: true,
-        autoHideMenuBar: true,
-        webPreferences: {
-          nodeIntegration: true,
-          allowRunningInsecureContent: serve ? true : false,
-        },
-      });
-
-      this.stateManager = new StateManager(this.mainWin);
-      this.messenger = new Messenger(
-        this.mainWin,
-        this.stateManager.getState('MQTT')
-      );
-      this.downloader = new Downloader();
-
       // This method will be called when Electron has finished
       // initialization and is ready to create browser windows.
       // Some APIs can only be used after this event occurs.
-      app.on('ready', this.runApp.bind(this));
+      app.on('ready', () => {
+        this.runApp();
+        this.configManager = new ConfigManager(this.mainWin);
+        this.configManager.initialize();
+
+        this.fileExplorer = new FileExplorer();
+        this.fileExplorer.initialize();
+      });
 
       // Quit when all windows are closed.
       app.on('window-all-closed', () => {
@@ -62,11 +53,12 @@ class ProjectX {
         }
       });
     } catch (e) {
+      console.log(e);
       // Catch Error
       // throw e;
     }
 
-    this.initialized = true;
+    this._initialized = true;
   }
 
   runApp(): BrowserWindow {
@@ -74,6 +66,14 @@ class ProjectX {
     const size = electronScreen.getPrimaryDisplay().workAreaSize;
 
     // Create the browser window.
+    this.mainWin = new BrowserWindow({
+      fullscreen: true,
+      autoHideMenuBar: true,
+      webPreferences: {
+        nodeIntegration: true,
+        allowRunningInsecureContent: serve ? true : false,
+      },
+    });
 
     if (serve) {
       require('electron-reload')(__dirname, {

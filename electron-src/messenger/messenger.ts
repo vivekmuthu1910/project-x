@@ -1,12 +1,13 @@
-import {connect, , IClientOptions} from 'mqtt';
+/* import {connect, , IClientOptions} from 'mqtt';
 import * as net from 'net';
 import { BrowserWindow } from 'electron';
+import {ConfigManager} from '../config-manager/config-manager'
 
 export class Messenger {
   private _mqtt = null;
   private _initialized = false;
 
-  constructor(private win:BrowserWindow, private ) {}
+  constructor(private win:BrowserWindow, private config: ConfigManager) {}
 
   initialize() {
     try {
@@ -17,6 +18,17 @@ export class Messenger {
     this.initialized = true;
   }
 
+  reinitialize() {
+    this.initialized = false;
+
+    this.initialized = true;
+
+  }
+
+  uninitialize() {
+
+    this.initialized = false;
+  }
   get initialized() {
     return this._initialized;
   }
@@ -24,3 +36,4 @@ export class Messenger {
     this._initialized = v;
   }
 }
+ */
