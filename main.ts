@@ -77,7 +77,7 @@ class ProjectX {
 
     if (serve) {
       require('electron-reload')(__dirname, {
-        electron: require(`${__dirname}/node_modules/electron`),
+        electron: path.join(__dirname, 'node_modules', '.bin', 'electron'),
       });
       this.mainWin.loadURL('http://localhost:4200');
     } else {

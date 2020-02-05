@@ -101,11 +101,11 @@ export class FileExplorer {
       const file = parsedPath.name + imageFileNames[i];
 
       if (files.includes(file)) {
-        return fs.readFile(join(dir, file));
+        return (await fs.readFile(join(dir, file))).toString('base64');
       }
     }
 
-    return Buffer.from([]);
+    return '';
   }
 
   playVideo(dir: string, file: string) {

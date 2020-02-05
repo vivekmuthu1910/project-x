@@ -36,9 +36,10 @@ export class FilesListComponent implements OnInit, AfterViewInit {
     const videoFiles = await this.fileSer.listVideos(this.videoDirs[0]);
 
     for (let i = 0; i < videoFiles.length; i++) {
-      const thumb = (
-        await this.fileSer.getThumbs(this.videoDirs[0], videoFiles[i])
-      ).toString('base64');
+      const thumb = await this.fileSer.getThumbs(
+        this.videoDirs[0],
+        videoFiles[i]
+      );
       this.files.push({
         fileName: videoFiles[i],
         thumbnail: thumb,
@@ -51,6 +52,7 @@ export class FilesListComponent implements OnInit, AfterViewInit {
       .withWrap()
       .withHorizontalOrientation('ltr');
     this.keyManager.setActiveItem(0);
+    console.log(this.items);
   }
 
   openFile(file: string) {

@@ -32,10 +32,10 @@ export class FilesService {
     });
   }
 
-  getThumbs(dir: string, file: string): Promise<Buffer> {
+  getThumbs(dir: string, file: string): Promise<string> {
     return new Promise((resolve, reject) => {
       ipcRenderer
-        .once('getThumbnail', (event, thumbnailBuffer: Buffer) => {
+        .once('getThumbnail', (event, thumbnailBuffer: string) => {
           resolve(thumbnailBuffer);
         })
         .send('getThumbnail', dir, file);
