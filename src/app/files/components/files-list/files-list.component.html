@@ -1,8 +1,9 @@
-<div class="cont" (keyup)="onKeydown($event)">
+<div class="cont" (keyup)="onKeydown($event)" cdkTrapFocus>
   <app-list-view-item
-    *ngFor="let file of files"
+    *ngFor="let file of files; let i = index"
     [file]="file.fileName"
     [thumbnail]="file.thumbnail"
-    [baseDir]="dir"
+    [tabindex]="i === activeItem ? 0 : -1"
   ></app-list-view-item>
+  <!-- [baseDir]="videoDirs[0]" -->
 </div>

@@ -19,12 +19,12 @@ import { Highlightable, FocusableOption } from '@angular/cdk/a11y';
 export class ListViewItemComponent implements OnInit, FocusableOption {
   @Input() file: string;
   @Input() thumbnail: string;
-  @Input() baseDir: string;
+  // @Input() baseDir: string;
 
   thumbnailImageBase64: string;
   disabled = false;
 
-  constructor(private element: ElementRef) {}
+  constructor(public element: ElementRef<HTMLElement>) {}
 
   ngOnInit() {
     if (this.thumbnail) {

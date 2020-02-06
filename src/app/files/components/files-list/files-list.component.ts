@@ -13,7 +13,7 @@ import { FocusKeyManager } from '@angular/cdk/a11y';
   selector: 'app-files-list',
   templateUrl: './files-list.component.html',
   styleUrls: ['./files-list.component.scss'],
-  host: { role: 'list', tabindex: '0' },
+  host: { role: 'list' },
 })
 export class FilesListComponent implements OnInit, AfterViewInit {
   files: Array<{ fileName: string; thumbnail?: string }> = [];
@@ -23,7 +23,7 @@ export class FilesListComponent implements OnInit, AfterViewInit {
   @ViewChildren(ListViewItemComponent) items: QueryList<ListViewItemComponent>;
 
   private keyManager: FocusKeyManager<ListViewItemComponent>;
-
+  activeItem = 0;
   constructor(private fileSer: FilesService) {}
 
   ngOnInit() {
@@ -32,7 +32,6 @@ export class FilesListComponent implements OnInit, AfterViewInit {
 
   async fetchAllFiles() {
     this.videoDirs = await this.fileSer.getVideosDirectories();
-
     const videoFiles = await this.fileSer.listVideos(this.videoDirs[0]);
 
     for (let i = 0; i < videoFiles.length; i++) {
@@ -49,20 +48,32 @@ export class FilesListComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit() {
     this.keyManager = new FocusKeyManager(this.items)
-      .withWrap()
+      // .withWrap()
       .withHorizontalOrientation('ltr');
     this.keyManager.setActiveItem(0);
-    console.log(this.items);
+
+    setTimeout(() => {
+      console.log(this.items.first);
+      this.items.first.element.nativeElement.dispatchEvent(
+        new MouseEvent('click', {
+          view: window,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    }, 2000);
   }
 
   openFile(file: string) {
     this.fileSer.openFile(this.videoDirs[0], file);
   }
+
   onKeydown(event: KeyboardEvent) {
     if (event.key === 'Enter') {
       this.openFile(this.keyManager.activeItem.file);
     } else {
       this.keyManager.onKeydown(event);
+      this.activeItem = this.keyManager.activeItemIndex;
     }
   }
 }
