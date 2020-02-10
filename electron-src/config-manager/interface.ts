@@ -7,6 +7,7 @@ export interface MQTT {
   KeyPath?: string;
   CertFile?: string;
   CAFile?: string;
+  VideoTopic: string;
 }
 
 export interface Video {

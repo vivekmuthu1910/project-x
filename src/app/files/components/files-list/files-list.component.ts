@@ -53,7 +53,6 @@ export class FilesListComponent implements OnInit, AfterViewInit {
     this.keyManager.setActiveItem(0);
 
     setTimeout(() => {
-      console.log(this.items.first);
       this.items.first.element.nativeElement.dispatchEvent(
         new MouseEvent('click', {
           view: window,

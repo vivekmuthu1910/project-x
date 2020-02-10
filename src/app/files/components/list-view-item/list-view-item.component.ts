@@ -1,11 +1,5 @@
-import {
-  Component,
-  OnInit,
-  Input,
-  HostBinding,
-  ElementRef,
-} from '@angular/core';
-import { Highlightable, FocusableOption } from '@angular/cdk/a11y';
+import { Component, OnInit, Input, ElementRef } from '@angular/core';
+import { FocusableOption } from '@angular/cdk/a11y';
 
 @Component({
   selector: 'app-list-view-item',

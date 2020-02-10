@@ -9,4 +9,5 @@ export const mqtt = {
   Host: 'broker.hivemq.com',
   Port: 1883,
   TLS: false,
+  VideoTopic: 'TN/ProjX/Dld/Vid',
 };

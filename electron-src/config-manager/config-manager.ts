@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, promises as fsp } from 'fs';
 import { platform } from 'process';
 import { homedir } from 'os';
-import { join } from 'path';
+import { join, resolve } from 'path';
 import { MQTT, Video } from './interface';
 import { BrowserWindow, ipcMain } from 'electron';
 import * as defaultConfig from './default-config';
@@ -9,8 +9,8 @@ import * as defaultConfig from './default-config';
 export class ConfigManager {
   private appFolderPath: string;
 
-  private video: Video = null;
-  private mqtt: MQTT = null;
+  video: Video = null;
+  mqtt: MQTT = null;
 
   private _initialized = false;
 
@@ -24,33 +24,46 @@ export class ConfigManager {
   }
 
   private initializeDefaultConfig() {
-    if (!existsSync(join(this.appFolderPath))) {
+    if (!existsSync(resolve(this.appFolderPath))) {
       mkdirSync(this.appFolderPath, { recursive: true });
-
-      this.video = defaultConfig.video;
-      fsp
-        .writeFile(
-          join(this.appFolderPath, 'Video.json'),
-          JSON.stringify(this.video)
-        )
-        .catch();
-
-      this.mqtt = defaultConfig.mqtt;
-      fsp
-        .writeFile(
-          join(this.appFolderPath, 'Mqtt.json'),
-          JSON.stringify(this.mqtt)
-        )
-        .catch();
-      // this.win.webContents.send('firstTime');
-    } else {
-      fsp.readFile(join(this.appFolderPath, 'Video.json')).then(content => {
-        this.video = JSON.parse(content.toString());
-      });
-      fsp.readFile(join(this.appFolderPath, 'Mqtt.json')).then(content => {
-        this.mqtt = JSON.parse(content.toString());
-      });
     }
+
+    const videoPath = join(this.appFolderPath, 'Video.json');
+    const mqttPath = join(this.appFolderPath, 'MQTT.json');
+    fsp
+      .stat(videoPath)
+      .then(() => {
+        fsp
+          .readFile(videoPath)
+          .then(content => {
+            this.video = JSON.parse(content.toString());
+          })
+          .catch(console.error);
+      })
+      .catch(() => {
+        this.video = defaultConfig.video;
+
+        fsp
+          .writeFile(videoPath, JSON.stringify(this.video, null, 2))
+          .catch(console.error);
+      });
+
+    fsp
+      .stat(mqttPath)
+      .then(() => {
+        fsp
+          .readFile(mqttPath)
+          .then(content => {
+            this.mqtt = JSON.parse(content.toString());
+          })
+          .catch(console.error);
+      })
+      .catch(() => {
+        this.mqtt = defaultConfig.mqtt;
+        fsp
+          .writeFile(join(mqttPath), JSON.stringify(this.mqtt, null, 2))
+          .catch(console.error);
+      });
   }
 
   private getAppFolderPath() {
@@ -58,7 +71,7 @@ export class ConfigManager {
       case 'linux':
         return join(homedir(), '.project-x');
       case 'win32':
-        return join(homedir(), 'AppData/Roaming/Project-X');
+        return join(homedir(), 'AppData/Roaming/project-x');
       case 'darwin':
         return join(homedir(), 'Library/Application Support/Project-X');
       default:

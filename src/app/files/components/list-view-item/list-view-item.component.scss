@@ -7,6 +7,16 @@
   border: 0px;
   // width: 192px;
 }
+
+:host:focus {
+  outline: none;
+  .mat-card {
+    background-color: white;
+    color: black;
+    box-shadow: 0 0 10px 15px green;
+  }
+}
+
 .mat-card {
   margin: 21px 20px;
   width: 300px;
