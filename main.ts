@@ -4,7 +4,7 @@ import * as url from 'url';
 
 import { ConfigManager } from './electron-src/config-manager/config-manager';
 import { FileExplorer } from './electron-src/file-explorer/file-explorer';
-// import { Messenger } from './electron-src/messenger/messenger';
+import { Messenger } from './electron-src/messenger/messenger';
 // import { Downloader } from './electron-src/downloader/downloader';
 
 const args = process.argv.slice(1),
@@ -15,7 +15,7 @@ class ProjectX {
 
   configManager: ConfigManager = null;
   fileExplorer: FileExplorer = null;
-  // messenger: Messenger = null;
+  messenger: Messenger = null;
   // downloader: Downloader = null;
 
   private _initialized = false;
@@ -27,10 +27,13 @@ class ProjectX {
       // This method will be called when Electron has finished
       // initialization and is ready to create browser windows.
       // Some APIs can only be used after this event occurs.
-      app.on('ready', () => {
+      app.on('ready', async () => {
         this.runApp();
         this.configManager = new ConfigManager(this.mainWin);
-        this.configManager.initialize();
+        await this.configManager.initialize();
+
+        this.messenger = new Messenger(this.configManager);
+        this.messenger.initialize();
 
         this.fileExplorer = new FileExplorer();
         this.fileExplorer.initialize();

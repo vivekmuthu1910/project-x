@@ -16,54 +16,42 @@ export class ConfigManager {
 
   constructor(private win: BrowserWindow) {}
 
-  initialize() {
-    this.appFolderPath = this.getAppFolderPath();
-    this.initializeDefaultConfig();
-    this.initializeIpcCalls();
+  async initialize() {
+    try {
+      this.appFolderPath = this.getAppFolderPath();
+      this.initializeIpcCalls();
+      await this.initializeDefaultConfig();
+    } catch (error) {}
     this._initialized = true;
   }
 
-  private initializeDefaultConfig() {
+  private async initializeDefaultConfig() {
     if (!existsSync(resolve(this.appFolderPath))) {
       mkdirSync(this.appFolderPath, { recursive: true });
     }
 
     const videoPath = join(this.appFolderPath, 'Video.json');
     const mqttPath = join(this.appFolderPath, 'MQTT.json');
-    fsp
-      .stat(videoPath)
-      .then(() => {
-        fsp
-          .readFile(videoPath)
-          .then(content => {
-            this.video = JSON.parse(content.toString());
-          })
-          .catch(console.error);
-      })
-      .catch(() => {
-        this.video = defaultConfig.video;
 
-        fsp
-          .writeFile(videoPath, JSON.stringify(this.video, null, 2))
-          .catch(console.error);
-      });
+    try {
+      await fsp.stat(videoPath);
+      this.video = JSON.parse((await fsp.readFile(videoPath)).toString());
+    } catch (error) {
+      this.video = defaultConfig.video;
+      fsp
+        .writeFile(videoPath, JSON.stringify(this.video, null, 2))
+        .catch(console.error);
+    }
 
-    fsp
-      .stat(mqttPath)
-      .then(() => {
-        fsp
-          .readFile(mqttPath)
-          .then(content => {
-            this.mqtt = JSON.parse(content.toString());
-          })
-          .catch(console.error);
-      })
-      .catch(() => {
-        this.mqtt = defaultConfig.mqtt;
-        fsp
-          .writeFile(join(mqttPath), JSON.stringify(this.mqtt, null, 2))
-          .catch(console.error);
-      });
+    try {
+      await fsp.stat(mqttPath);
+      this.mqtt = JSON.parse((await fsp.readFile(mqttPath)).toString());
+    } catch (error) {
+      this.mqtt = defaultConfig.mqtt;
+      fsp
+        .writeFile(mqttPath, JSON.stringify(this.mqtt, null, 2))
+        .catch(console.error);
+    }
   }
 
   private getAppFolderPath() {
