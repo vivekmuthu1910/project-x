@@ -3,6 +3,10 @@ import { parse, join } from 'path';
 import { Buffer } from 'buffer';
 import { ipcMain } from 'electron';
 import { exec } from 'child_process';
+import { async } from '@angular/core/testing';
+
+const ping = require('ping');
+const network = require('network');
 
 interface GetAllFilesOptions {
   sortBy: 'name' | 'time' | 'size';
@@ -19,7 +23,7 @@ async function* getStats(dir: string, files: Array<string>) {
     if (videoFileExts.includes(parseFilePath.ext)) {
       yield {
         name: file,
-        birthtime: stat.birthtime,
+        birthtime: stat.mtime,
         size: stat.size,
       };
     }
@@ -46,6 +50,37 @@ export class FileExplorer {
         this.playVideo(dir, file);
       });
 
+    let gatewayIp: string = '';
+    network.get_gateway_ip((err, obj) => {
+      if (err) {
+        console.error(err);
+      } else {
+        gatewayIp = obj;
+      }
+    });
+
+    let lastTimePingSuccess = 0;
+    setInterval(async () => {
+      try {
+        const pingState = await ping.promise.probe(gatewayIp);
+        if (!pingState.alive) {
+          if (Date.now() - lastTimePingSuccess > 1800000) {
+            exec('sudo shutdown now', (err, stdout) => {
+              if (err) {
+                console.error(err);
+              }
+            });
+          }
+          exec('sudo pkill vlc', (err, stdout) => {
+            if (err) {
+              console.error(err);
+            }
+          });
+        } else {
+          lastTimePingSuccess = Date.now();
+        }
+      } catch (error) {}
+    }, 5000);
     this._initialized = true;
   }
 
@@ -67,6 +102,7 @@ export class FileExplorer {
       fileStats.push(stat);
     }
 
+    console.log(fileStats);
     fileStats.sort((fileA, fileB) => {
       switch (opts.sortBy) {
         case 'time':

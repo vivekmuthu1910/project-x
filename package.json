@@ -48,6 +48,9 @@
     "log4js": "^6.1.1",
     "mqtt": "^3.0.0",
     "mt-files-downloader": "^0.2.5",
+    "network": "^0.5.0",
+    "node-downloader-helper": "^1.0.12",
+    "ping": "^0.2.2",
     "rxjs": "6.5.3",
     "zone.js": "0.9.1"
   },
@@ -63,6 +66,7 @@
     "@types/jasminewd2": "2.0.8",
     "@types/mocha": "5.2.7",
     "@types/node": "12.6.9",
+    "@types/node-downloader-helper": "^1.0.0",
     "@typescript-eslint/eslint-plugin": "2.8.0",
     "@typescript-eslint/parser": "2.8.0",
     "chai": "4.2.0",

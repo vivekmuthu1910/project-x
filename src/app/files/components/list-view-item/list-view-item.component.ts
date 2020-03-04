@@ -1,6 +1,6 @@
 import { Component, OnInit, Input, ElementRef } from '@angular/core';
 import { FocusableOption } from '@angular/cdk/a11y';
-
+import { parse } from 'path';
 @Component({
   selector: 'app-list-view-item',
   templateUrl: './list-view-item.component.html',
@@ -28,8 +28,8 @@ export class ListViewItemComponent implements OnInit, FocusableOption {
     }
   }
 
-  getLabel() {
-    return this.file;
+  get filename() {
+    return parse(this.file).name;
   }
 
   focus() {
