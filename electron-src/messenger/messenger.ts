@@ -6,13 +6,19 @@ import * as querystring from 'querystring';
 import { DownloaderHelper } from 'node-downloader-helper';
 import { BrowserWindow } from 'electron';
 import { unlinkSync, existsSync } from 'fs';
+import { exec } from 'child_process';
+import { FileExplorer } from '../file-explorer/file-explorer';
+
+const ackTopicBase = 'ProjectX/TS/ACK';
+const commandTopicBase = 'ProjectX/TS/COMMAND';
+
 export class Messenger {
   private _mqtt: MqttClient = null;
   private _initialized = false;
 
   constructor(private win: BrowserWindow, private config: ConfigManager) {}
 
-  initialize() {
+  initialize(fileExp: FileExplorer) {
     try {
       const mqttConfig: IClientOptions = {
         host: this.config.mqtt.Host,
@@ -22,19 +28,37 @@ export class Messenger {
       this._mqtt = connect(mqttConfig);
 
       this._mqtt.subscribe(this.config.mqtt.VideoTopic);
-      this._mqtt.subscribe('ProjectX/TS/Are/You/Alive');
+
+      this._mqtt.subscribe(`${commandTopicBase}/#`);
 
       this._mqtt.on(
-        'message',
+        `message`,
         (topic: string, payload: Buffer, packet: Packet) => {
-          if (topic === 'ProjectX/TS/Are/You/Alive') {
-            // this._mqtt.publish('ProjectX/TS/Are/You/Alive/ACK', 'yes');
-            this.notify('Alive', 'Hi I am alive');
+          if (topic === `${commandTopicBase}/RUAlive`) {
+            this._mqtt.publish(`${ackTopicBase}/RUAlive`, `yes`);
+            this.notify(
+              `Alive`,
+              `Hi I am alive. Files count: ${fileExp.videosSize}.`
+            );
             return;
           }
-          if (topic === 'ProjectX/TS/Are/You/Alive/ACKONLY') {
-            this._mqtt.publish('ProjectX/TS/Are/You/Alive/ACK', 'yes');
+          if (topic === `${commandTopicBase}/RUAliveACKOnly`) {
+            this._mqtt.publish(`${ackTopicBase}/RUAliveACKOnly`, `yes`);
+            return;
           }
+
+          if (topic === `${commandTopicBase}/Reboot`) {
+            this._mqtt.publish(`${ackTopicBase}/Reboot`, `yes`);
+            exec(`sudo reboot`);
+            return;
+          }
+
+          if (topic === `${commandTopicBase}/ShutDown`) {
+            this._mqtt.publish(`${ackTopicBase}/ShutDown`, 'yes');
+            exec('sudo shutdown now');
+            return;
+          }
+
           this.processMessage(topic, payload);
         }
       );

@@ -34,11 +34,11 @@ class ProjectX {
         this.configManager = new ConfigManager(this.mainWin);
         await this.configManager.initialize();
 
-        this.messenger = new Messenger(this.mainWin, this.configManager);
-        this.messenger.initialize();
-
         this.fileExplorer = new FileExplorer();
         this.fileExplorer.initialize();
+
+        this.messenger = new Messenger(this.mainWin, this.configManager);
+        this.messenger.initialize(this.fileExplorer);
       });
 
       // Quit when all windows are closed.
@@ -57,6 +57,8 @@ class ProjectX {
           this.runApp();
         }
       });
+
+      this.startupNotify();
     } catch (e) {
       console.log(e);
       // Catch Error
@@ -110,6 +112,37 @@ class ProjectX {
     return this.mainWin;
   }
 
+  startupNotify() {
+    setTimeout(() => {
+      const postData = querystring.stringify({
+        message: `App started. ${new Date(
+          Date.now() - 90000
+        ).toLocaleString()}. Total Videos: ${this.fileExplorer.videosSize}`,
+        title: 'App Notification',
+        notifyMe: 'yes',
+      });
+
+      const options = {
+        hostname: '35.244.47.236',
+        port: 80,
+        path: '/ThanosSnapUtility/Notify',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Length': Buffer.byteLength(postData),
+        },
+      };
+
+      const req = request(options, res => {});
+
+      req.on('error', e => {
+        console.error(`Problem with request: ${e.message}`);
+      });
+      req.write(postData);
+      req.end();
+    }, 90000);
+  }
+
   get initialized() {
     return this._initialized;
   }
@@ -121,30 +154,3 @@ class ProjectX {
 
 const projectX = new ProjectX();
 projectX.initialize();
-
-setTimeout(() => {
-  const postData = querystring.stringify({
-    message: 'App started',
-    title: 'App Notification',
-    notifyMe: 'yes',
-  });
-
-  const options = {
-    hostname: '35.244.47.236',
-    port: 80,
-    path: '/ThanosSnapUtility/Notify',
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Content-Length': Buffer.byteLength(postData),
-    },
-  };
-
-  const req = request(options, res => {});
-
-  req.on('error', e => {
-    console.error(`Problem with request: ${e.message}`);
-  });
-  req.write(postData);
-  req.end();
-}, 90000);

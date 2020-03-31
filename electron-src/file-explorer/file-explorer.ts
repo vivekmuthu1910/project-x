@@ -32,6 +32,8 @@ async function* getStats(dir: string, files: Array<string>) {
 
 export class FileExplorer {
   private _initialized = false;
+
+  videosSize = 0;
   constructor() {}
 
   initialize() {
@@ -64,18 +66,18 @@ export class FileExplorer {
       try {
         const pingState = await ping.promise.probe(gatewayIp);
         if (!pingState.alive) {
-          if (Date.now() - lastTimePingSuccess > 1800000) {
+          if (Date.now() - lastTimePingSuccess > 30000) {
             exec('sudo shutdown now', (err, stdout) => {
               if (err) {
                 console.error(err);
               }
             });
           }
-          exec('sudo pkill vlc', (err, stdout) => {
-            if (err) {
-              console.error(err);
-            }
-          });
+          // exec('sudo shutdown now', (err, stdout) => {
+          //   if (err) {
+          //     console.error(err);
+          //   }
+          // });
         } else {
           lastTimePingSuccess = Date.now();
         }
@@ -126,6 +128,7 @@ export class FileExplorer {
       }
     });
 
+    this.videosSize = fileStats.length;
     return fileStats.map(val => val.name);
   }
 
