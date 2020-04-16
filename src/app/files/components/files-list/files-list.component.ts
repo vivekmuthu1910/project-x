@@ -4,6 +4,8 @@ import {
   ViewChildren,
   QueryList,
   AfterViewInit,
+  ViewChild,
+  ElementRef,
 } from '@angular/core';
 import { FilesService } from '../../services/files.service';
 import { ListViewItemComponent } from '../list-view-item/list-view-item.component';
@@ -21,10 +23,14 @@ export class FilesListComponent implements OnInit, AfterViewInit {
   videoDirs: Array<string> = [];
 
   @ViewChildren(ListViewItemComponent) items: QueryList<ListViewItemComponent>;
+  @ViewChild(ListViewItemComponent, { static: false }) firstItem;
+  @ViewChild('baseCont', { static: true }) baseContEl: ElementRef<
+    HTMLDivElement
+  >;
 
   private keyManager: FocusKeyManager<ListViewItemComponent>;
   activeItem = 0;
-  constructor(private fileSer: FilesService) {}
+  constructor(private el: ElementRef, private fileSer: FilesService) {}
 
   ngOnInit() {
     this.fetchAllFiles();
@@ -53,13 +59,8 @@ export class FilesListComponent implements OnInit, AfterViewInit {
     this.keyManager.setActiveItem(0);
 
     setTimeout(() => {
-      this.items.first.element.nativeElement.dispatchEvent(
-        new MouseEvent('click', {
-          view: window,
-          bubbles: true,
-          cancelable: true,
-        })
-      );
+      const e: any = document.getElementsByTagName('APP-LIST-VIEW-ITEM')[0];
+      e.focus();
     }, 2000);
   }
 
@@ -69,7 +70,11 @@ export class FilesListComponent implements OnInit, AfterViewInit {
 
   onKeydown(event: KeyboardEvent) {
     if (event.key === 'Enter') {
-      this.openFile(this.keyManager.activeItem.file);
+      if (this.keyManager.activeItem) {
+        this.openFile(this.keyManager.activeItem.file);
+      } else {
+        this.openFile(this.files[0].fileName);
+      }
     } else {
       this.keyManager.onKeydown(event);
       this.activeItem = this.keyManager.activeItemIndex;

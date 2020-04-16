@@ -1,4 +1,4 @@
-<div class="cont" (keyup)="onKeydown($event)" cdkTrapFocus>
+<div class="cont" #baseCont (keyup)="onKeydown($event)" cdkTrapFocus>
   <app-list-view-item
     *ngFor="let file of files; let i = index"
     [file]="file.fileName"

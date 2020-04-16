@@ -8,7 +8,9 @@ import { BrowserWindow } from 'electron';
 import { unlinkSync, existsSync } from 'fs';
 import { exec } from 'child_process';
 import { FileExplorer } from '../file-explorer/file-explorer';
+import { async } from '@angular/core/testing';
 
+const diskusage = require('diskusage');
 const ackTopicBase = 'ProjectX/TS/ACK';
 const commandTopicBase = 'ProjectX/TS/COMMAND';
 
@@ -33,13 +35,23 @@ export class Messenger {
 
       this._mqtt.on(
         `message`,
-        (topic: string, payload: Buffer, packet: Packet) => {
+        async (topic: string, payload: Buffer, packet: Packet) => {
           if (topic === `${commandTopicBase}/RUAlive`) {
+            let message = `Hi I am alive. Files count: ${fileExp.videosSize}.`;
+
+            try {
+              const { free } = await diskusage.check(
+                'config.video.Directories[0]'
+              );
+              message += `Remaining Disk space: ${(free / 1048576).toFixed(
+                2
+              )}GB`;
+            } catch (error) {
+              console.error(error);
+            }
+
             this._mqtt.publish(`${ackTopicBase}/RUAlive`, `yes`);
-            this.notify(
-              `Alive`,
-              `Hi I am alive. Files count: ${fileExp.videosSize}.`
-            );
+            this.notify(`Alive`, message);
             return;
           }
           if (topic === `${commandTopicBase}/RUAliveACKOnly`) {
@@ -114,10 +126,10 @@ export class Messenger {
         this._mqtt.publish(
           `${this.config.mqtt.VideoTopic}/PROGRESS`,
           JSON.stringify({
-            downloaded: stat.downloaded / 1024 / 1024,
-            speed: stat.speed / 1024 / 1024,
-            remaining: (stat.total - stat.downloaded) / 1024 / 1024,
-            fileName: message.videoFileName,
+            d: stat.downloaded / 1024 / 1024,
+            s: stat.speed / 1024 / 1024,
+            r: (stat.total - stat.downloaded) / 1024 / 1024,
+            f: message.videoFileName,
           })
         );
       }, 5000);

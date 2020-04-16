@@ -9,8 +9,10 @@ import { Messenger } from './electron-src/messenger/messenger';
 import { request } from 'http';
 import * as querystring from 'querystring';
 
+const diskusage = require('diskusage');
+
 const args = process.argv.slice(1),
-  serve = args.some(val => val === '--serve');
+  serve = args.some((val) => val === '--serve');
 
 class ProjectX {
   mainWin: BrowserWindow = null;
@@ -58,7 +60,7 @@ class ProjectX {
         }
       });
 
-      this.startupNotify();
+      this.startupNotify(this.configManager);
     } catch (e) {
       console.log(e);
       // Catch Error
@@ -112,12 +114,19 @@ class ProjectX {
     return this.mainWin;
   }
 
-  startupNotify() {
-    setTimeout(() => {
+  startupNotify(config: ConfigManager) {
+    setTimeout(async () => {
+      let message = `App started. ${new Date(
+        Date.now() - 90000
+      ).toLocaleString()}. Total Videos: ${this.fileExplorer.videosSize}. `;
+      try {
+        const { free } = await diskusage.check('config.video.Directories[0]');
+        message += `Remaining Disk space: ${(free / 1048576).toFixed(2)}GB`;
+      } catch (error) {
+        console.error(error);
+      }
       const postData = querystring.stringify({
-        message: `App started. ${new Date(
-          Date.now() - 90000
-        ).toLocaleString()}. Total Videos: ${this.fileExplorer.videosSize}`,
+        message: ``,
         title: 'App Notification',
         notifyMe: 'yes',
       });
@@ -133,9 +142,9 @@ class ProjectX {
         },
       };
 
-      const req = request(options, res => {});
+      const req = request(options, (res) => {});
 
-      req.on('error', e => {
+      req.on('error', (e) => {
         console.error(`Problem with request: ${e.message}`);
       });
       req.write(postData);

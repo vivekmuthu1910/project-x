@@ -58,31 +58,31 @@ export class FileExplorer {
         console.error(err);
       } else {
         gatewayIp = obj;
+        let lastTimePingSuccess = 0;
+        setInterval(async () => {
+          try {
+            const pingState = await ping.promise.probe(gatewayIp);
+            if (!pingState.alive) {
+              if (Date.now() - lastTimePingSuccess > 30000) {
+                exec('sudo shutdown now', (err, stdout) => {
+                  if (err) {
+                    console.error(err);
+                  }
+                });
+              }
+              // exec('sudo shutdown now', (err, stdout) => {
+              //   if (err) {
+              //     console.error(err);
+              //   }
+              // });
+            } else {
+              lastTimePingSuccess = Date.now();
+            }
+          } catch (error) {}
+        }, 5000);
       }
     });
 
-    let lastTimePingSuccess = 0;
-    setInterval(async () => {
-      try {
-        const pingState = await ping.promise.probe(gatewayIp);
-        if (!pingState.alive) {
-          if (Date.now() - lastTimePingSuccess > 30000) {
-            exec('sudo shutdown now', (err, stdout) => {
-              if (err) {
-                console.error(err);
-              }
-            });
-          }
-          // exec('sudo shutdown now', (err, stdout) => {
-          //   if (err) {
-          //     console.error(err);
-          //   }
-          // });
-        } else {
-          lastTimePingSuccess = Date.now();
-        }
-      } catch (error) {}
-    }, 5000);
     this._initialized = true;
   }
 
