@@ -45,4 +45,8 @@ export class FilesService {
   openFile(folder: string, file: string) {
     ipcRenderer.send('playVideo', folder, file);
   }
+
+  rebootSystem() {
+    ipcRenderer.send('reboot');
+  }
 }

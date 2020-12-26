@@ -8,7 +8,6 @@ import { BrowserWindow } from 'electron';
 import { unlinkSync, existsSync } from 'fs';
 import { exec } from 'child_process';
 import { FileExplorer } from '../file-explorer/file-explorer';
-import { async } from '@angular/core/testing';
 
 const diskusage = require('diskusage');
 const ackTopicBase = 'ProjectX/TS/ACK';
@@ -33,47 +32,44 @@ export class Messenger {
 
       this._mqtt.subscribe(`${commandTopicBase}/#`);
 
-      this._mqtt.on(
-        `message`,
-        async (topic: string, payload: Buffer, packet: Packet) => {
-          if (topic === `${commandTopicBase}/RUAlive`) {
-            let message = `Hi I am alive. Files count: ${fileExp.videosSize}.`;
+      this._mqtt.on(`message`, async (topic: string, payload: Buffer) => {
+        if (topic === `${commandTopicBase}/RUAlive`) {
+          let message = `Hi I am alive. Files count: ${fileExp.videosSize}.`;
 
-            try {
-              const { free } = await diskusage.check(
-                'config.video.Directories[0]'
-              );
-              message += `Remaining Disk space: ${(free / 1048576).toFixed(
-                2
-              )}GB`;
-            } catch (error) {
-              console.error(error);
-            }
-
-            this._mqtt.publish(`${ackTopicBase}/RUAlive`, `yes`);
-            this.notify(`Alive`, message);
-            return;
-          }
-          if (topic === `${commandTopicBase}/RUAliveACKOnly`) {
-            this._mqtt.publish(`${ackTopicBase}/RUAliveACKOnly`, `yes`);
-            return;
+          try {
+            const { free } = await diskusage.check(
+              this.config.video.Directories[0]
+            );
+            message += `Remaining Disk space: ${(free / 1073741824).toFixed(
+              2
+            )}GB`;
+          } catch (error) {
+            console.error(error);
           }
 
-          if (topic === `${commandTopicBase}/Reboot`) {
-            this._mqtt.publish(`${ackTopicBase}/Reboot`, `yes`);
-            exec(`sudo reboot`);
-            return;
-          }
-
-          if (topic === `${commandTopicBase}/ShutDown`) {
-            this._mqtt.publish(`${ackTopicBase}/ShutDown`, 'yes');
-            exec('sudo shutdown now');
-            return;
-          }
-
-          this.processMessage(topic, payload);
+          this._mqtt.publish(`${ackTopicBase}/RUAlive`, `yes`);
+          this.notify(`Alive`, message);
+          return;
         }
-      );
+        if (topic === `${commandTopicBase}/RUAliveACKOnly`) {
+          this._mqtt.publish(`${ackTopicBase}/RUAliveACKOnly`, `yes`);
+          return;
+        }
+
+        if (topic === `${commandTopicBase}/Reboot`) {
+          this._mqtt.publish(`${ackTopicBase}/Reboot`, `yes`);
+          exec(`sudo reboot`);
+          return;
+        }
+
+        if (topic === `${commandTopicBase}/ShutDown`) {
+          this._mqtt.publish(`${ackTopicBase}/ShutDown`, 'yes');
+          exec('sudo shutdown now');
+          return;
+        }
+
+        this.processMessage(topic, payload);
+      });
     } catch (error) {
       console.error(error);
     }
@@ -146,7 +142,7 @@ export class Messenger {
         this.win.reload();
       });
 
-      videoDl.on('error', err => {
+      videoDl.on('error', (err) => {
         unlinkSync(
           join(this.config.video.Directories[0], message.videoFileName)
         );
@@ -173,7 +169,7 @@ export class Messenger {
     });
 
     const options = {
-      hostname: '35.244.47.236',
+      hostname: this.config.otherSettings.SnapServer,
       port: 80,
       path: '/ThanosSnapUtility/Notify',
       method: 'POST',
@@ -185,10 +181,15 @@ export class Messenger {
 
     const req = request(options, () => {});
 
-    req.on('error', e => {
+    req.on('error', (e) => {
       console.error(`Problem with request: ${e.message}`);
     });
     req.write(postData);
     req.end();
+
+    request(
+      `https://api.callmebot.com/whatsapp.php?phone=+919790809042&apikey=391481&text=` +
+        encodeURI(message)
+    );
   }
 }

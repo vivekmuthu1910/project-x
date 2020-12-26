@@ -75,6 +75,8 @@ export class FilesListComponent implements OnInit, AfterViewInit {
       } else {
         this.openFile(this.files[0].fileName);
       }
+    } else if (event.key === 'PageUp') {
+      this.fileSer.rebootSystem();
     } else {
       this.keyManager.onKeydown(event);
       this.activeItem = this.keyManager.activeItemIndex;

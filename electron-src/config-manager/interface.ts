@@ -13,3 +13,8 @@ export interface MQTT {
 export interface Video {
   Directories: Array<string>;
 }
+
+export interface OtherSettings {
+  SnapServer: string;
+  GatewayIP: string;
+}

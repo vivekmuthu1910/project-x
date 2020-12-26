@@ -1,6 +1,7 @@
 import { app, BrowserWindow, screen, Menu } from 'electron';
 import * as path from 'path';
 import * as url from 'url';
+import { promises } from 'fs';
 
 import { ConfigManager } from './electron-src/config-manager/config-manager';
 import { FileExplorer } from './electron-src/file-explorer/file-explorer';
@@ -36,7 +37,7 @@ class ProjectX {
         this.configManager = new ConfigManager(this.mainWin);
         await this.configManager.initialize();
 
-        this.fileExplorer = new FileExplorer();
+        this.fileExplorer = new FileExplorer(this.configManager);
         this.fileExplorer.initialize();
 
         this.messenger = new Messenger(this.mainWin, this.configManager);
@@ -60,7 +61,7 @@ class ProjectX {
         }
       });
 
-      this.startupNotify(this.configManager);
+      this.startupNotify(); // (this.configManager);
     } catch (e) {
       console.log(e);
       // Catch Error
@@ -71,9 +72,6 @@ class ProjectX {
   }
 
   runApp(): BrowserWindow {
-    const electronScreen = screen;
-    const size = electronScreen.getPrimaryDisplay().workAreaSize;
-
     // Create the browser window.
     this.mainWin = new BrowserWindow({
       fullscreen: true,
@@ -114,41 +112,37 @@ class ProjectX {
     return this.mainWin;
   }
 
-  startupNotify(config: ConfigManager) {
+  startupNotify() {
     setTimeout(async () => {
       let message = `App started. ${new Date(
         Date.now() - 90000
-      ).toLocaleString()}. Total Videos: ${this.fileExplorer.videosSize}. `;
+      ).toLocaleString()}. Total Videos: ${this.fileExplorer.videosSize}.`;
       try {
-        const { free } = await diskusage.check('config.video.Directories[0]');
-        message += `Remaining Disk space: ${(free / 1048576).toFixed(2)}GB`;
+        const { free } = await diskusage.check(
+          this.configManager.video.Directories[0]
+        );
+        message += ` Remaining Disk space: ${(free / 1073741824).toFixed(
+          2
+        )}GB.`;
       } catch (error) {
         console.error(error);
       }
-      const postData = querystring.stringify({
-        message: ``,
-        title: 'App Notification',
-        notifyMe: 'yes',
-      });
 
-      const options = {
-        hostname: '35.244.47.236',
-        port: 80,
-        path: '/ThanosSnapUtility/Notify',
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Content-Length': Buffer.byteLength(postData),
-        },
-      };
+      let shutdownFile = '/home/pi/project-x/shutdown.txt';
+      try {
+        await promises.readFile(shutdownFile).then((val) => {
+          if (val.toString()[0] === '1') {
+            message += ` Last shutdown was proper.`;
+            return promises.writeFile(shutdownFile, '0');
+          } else {
+            message += ` Last shutdown was improper.`;
+          }
+        });
+      } catch (error) {
+        console.error(error);
+      }
 
-      const req = request(options, (res) => {});
-
-      req.on('error', (e) => {
-        console.error(`Problem with request: ${e.message}`);
-      });
-      req.write(postData);
-      req.end();
+      this.messenger.notify('App Notification', message);
     }, 90000);
   }
 

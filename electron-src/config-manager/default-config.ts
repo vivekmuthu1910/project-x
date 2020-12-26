@@ -11,3 +11,8 @@ export const mqtt = {
   TLS: false,
   VideoTopic: 'TN/ProjX/Dld/Vid',
 };
+
+export const otherSettings = {
+  SnapServer: '34.105.0.150',
+  GatewayIP: '192.168.0.1',
+};

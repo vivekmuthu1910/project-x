@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, promises as fsp } from 'fs';
 import { platform } from 'process';
 import { homedir } from 'os';
 import { join, resolve } from 'path';
-import { MQTT, Video } from './interface';
+import { MQTT, Video, OtherSettings } from './interface';
 import { BrowserWindow, ipcMain } from 'electron';
 import * as defaultConfig from './default-config';
 
@@ -11,6 +11,7 @@ export class ConfigManager {
 
   video: Video = null;
   mqtt: MQTT = null;
+  otherSettings: OtherSettings = null;
 
   private _initialized = false;
 
@@ -32,6 +33,7 @@ export class ConfigManager {
 
     const videoPath = join(this.appFolderPath, 'Video.json');
     const mqttPath = join(this.appFolderPath, 'MQTT.json');
+    const otherSettingsPath = join(this.appFolderPath, 'OtherSettings.json');
 
     try {
       await fsp.stat(videoPath);
@@ -52,6 +54,21 @@ export class ConfigManager {
         .writeFile(mqttPath, JSON.stringify(this.mqtt, null, 2))
         .catch(console.error);
     }
+
+    try {
+      await fsp.stat(otherSettingsPath);
+      this.otherSettings = JSON.parse(
+        (await fsp.readFile(otherSettingsPath)).toString()
+      );
+    } catch (error) {
+      this.otherSettings = defaultConfig.otherSettings;
+      fsp
+        .writeFile(
+          otherSettingsPath,
+          JSON.stringify(this.otherSettings, null, 2)
+        )
+        .catch(console.error);
+    }
   }
 
   private getAppFolderPath() {
@@ -68,7 +85,7 @@ export class ConfigManager {
   }
 
   initializeIpcCalls() {
-    ipcMain.on('getVideoDirs', event => {
+    ipcMain.on('getVideoDirs', (event) => {
       event.reply('getVideoDirs', this.video.Directories);
     });
   }

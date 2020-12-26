@@ -1,12 +1,10 @@
 import { promises as fs } from 'fs';
 import { parse, join } from 'path';
-import { Buffer } from 'buffer';
 import { ipcMain } from 'electron';
 import { exec } from 'child_process';
-import { async } from '@angular/core/testing';
+import { ConfigManager } from '../config-manager/config-manager';
 
 const ping = require('ping');
-const network = require('network');
 
 interface GetAllFilesOptions {
   sortBy: 'name' | 'time' | 'size';
@@ -32,28 +30,56 @@ async function* getStats(dir: string, files: Array<string>) {
 
 export class FileExplorer {
   private _initialized = false;
+  private config: ConfigManager = null;
 
   videosSize = 0;
-  constructor() {}
+  constructor(config: ConfigManager) {
+    this.config = config;
+  }
 
   initialize() {
     ipcMain
       .on('getVideos', (event, dir, options?) => {
-        this.getAllVideoFiles(dir, options).then(val => {
+        this.getAllVideoFiles(dir, options).then((val) => {
           event.reply('getVideos', val);
         });
       })
       .on('getThumbnail', (event, dir, file) => {
-        this.getThumbnail(dir, file).then(val => {
+        this.getThumbnail(dir, file).then((val) => {
           event.reply('getThumbnail', val);
         });
       })
       .on('playVideo', (event, dir, file) => {
         this.playVideo(dir, file);
+      })
+      .on('reboot', () => {
+        exec('reboot');
       });
 
-    let gatewayIp: string = '';
-    network.get_gateway_ip((err, obj) => {
+    let gatewayIp: string = this.config.otherSettings.GatewayIP;
+
+    let lastTimePingSuccess = 0;
+
+    setTimeout(() => {
+      setInterval(async () => {
+        try {
+          const pingState = await ping.promise.probe(gatewayIp);
+          if (!pingState.alive) {
+            if (Date.now() - lastTimePingSuccess > 30000) {
+              exec('shutdown now', (err) => {
+                if (err) {
+                  console.error(err);
+                }
+              });
+            }
+          } else {
+            lastTimePingSuccess = Date.now();
+          }
+        } catch (error) {}
+      }, 5000);
+    }, 120000);
+
+    /*  network.get_gateway_ip((err, obj) => {
       if (err) {
         console.error(err);
       } else {
@@ -63,7 +89,7 @@ export class FileExplorer {
           try {
             const pingState = await ping.promise.probe(gatewayIp);
             if (!pingState.alive) {
-              if (Date.now() - lastTimePingSuccess > 30000) {
+              if (Date.now() - lastTimePingSuccess > 60000) {
                 exec('sudo shutdown now', (err, stdout) => {
                   if (err) {
                     console.error(err);
@@ -82,7 +108,7 @@ export class FileExplorer {
         }, 5000);
       }
     });
-
+ */
     this._initialized = true;
   }
 
@@ -118,9 +144,11 @@ export class FileExplorer {
             ? fileA.size - fileB.size
             : fileB.size - fileA.size;
         case 'name':
-          return (opts.sortOrder === 'ascending'
-          ? fileA.name < fileB.name
-          : fileB.name < fileA.name)
+          return (
+            opts.sortOrder === 'ascending'
+              ? fileA.name < fileB.name
+              : fileB.name < fileA.name
+          )
             ? -1
             : 1;
         default:
@@ -129,7 +157,7 @@ export class FileExplorer {
     });
 
     this.videosSize = fileStats.length;
-    return fileStats.map(val => val.name);
+    return fileStats.map((val) => val.name);
   }
 
   async getThumbnail(dir: string, fileName: string) {
@@ -150,7 +178,7 @@ export class FileExplorer {
   playVideo(dir: string, file: string) {
     const filePath = join(dir, file);
     const vlcCommand = `vlc -f "${filePath}"`;
-    exec(vlcCommand, (err, stdout) => {
+    exec(vlcCommand, (err) => {
       if (err) {
         console.error(err);
       }
