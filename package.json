@@ -72,7 +72,7 @@
     "chai": "4.2.0",
     "codelyzer": "5.1.2",
     "conventional-changelog-cli": "2.0.32",
-    "electron": "^8.0.0",
+    "electron": "^11.5.0",
     "electron-builder": "^22.3.2",
     "electron-reload": "^1.5.0",
     "eslint": "6.6.0",
